@@ -1,5 +1,9 @@
-﻿using ACMEWorker.Models;
+﻿using ACMEWorker.Helpers;
+using ACMEWorker.Models;
+using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Net.Http;
@@ -10,17 +14,19 @@ namespace ACMEWorker.APIControllers
 {
     class PostsController
     {
-        static HttpClient Client { get; set; }
-        public List<Post> postData { get; set; }
-        public PostsController(HttpClient client)
+        private string ConnectionString;
+        static HttpClient Client;
+        private List<Post> postData;
+        public PostsController(HttpClient client, string connectionString)
         {
             Client = client;
+            ConnectionString = connectionString;
             postData = new List<Post>();
         }
 
         public async Task GetPosts()
         {
-            string url = "/posts";
+            string url = ConnectionHelper.GetConnectionString("posts", ConnectionString);
 
             using (HttpResponseMessage response = await Client.GetAsync(url))
             {
@@ -32,12 +38,10 @@ namespace ACMEWorker.APIControllers
 
         public void SavePostsToDB()
         {
-            var cs = "Server=.;Database=ACMEWorkerDB;Trusted_Connection=True;";
-
             foreach (Post post in postData) {
                 try
                 {
-                    using (SqlConnection con = new SqlConnection(cs))
+                    using (SqlConnection con = new SqlConnection(ConnectionString))
                     {
                         using (var cmd = new SqlCommand("PostInsertCommand", con)
                         {
@@ -55,7 +59,10 @@ namespace ACMEWorker.APIControllers
 
                     }
                 }
-                catch { }
+                catch (SqlException e)
+                { Console.WriteLine(e.Message);
+                    break;
+                }
             }
         }
     }

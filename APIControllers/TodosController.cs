@@ -10,62 +10,57 @@ using System.Threading.Tasks;
 
 namespace ACMEWorker.APIControllers
 {
-    class CommentsController
+    class TodosController
     {
         private string ConnectionString;
         static HttpClient Client;
-        private List<Comment> commentData;
+        private List<Todo> TodoData;
 
-        public CommentsController(HttpClient client, string connectionString)
+        public TodosController(HttpClient client, string connectionString)
         {
             Client = client;
             ConnectionString = connectionString;
-            commentData = new List<Comment>();
+            TodoData = new List<Todo>();
         }
-        public async Task GetComments()
+        public async Task GetTodos()
         {
-            string url = ConnectionHelper.GetConnectionString("comments", ConnectionString);
+            string url = ConnectionHelper.GetConnectionString("todos", ConnectionString);
 
             using (HttpResponseMessage response = await Client.GetAsync(url))
             {
-                commentData =
-                    await JsonSerializer.DeserializeAsync<List<Comment>>
+                TodoData =
+                    await JsonSerializer.DeserializeAsync<List<Todo>>
                         (await response.Content.ReadAsStreamAsync());
             }
         }
 
-        public void SaveCommentsToDB()
+        public void SaveTodosToDB()
         {
-            
-            foreach (Comment comment in commentData)
+            foreach (Todo Todo in TodoData)
             {
                 try
                 {
                     using (SqlConnection con = new SqlConnection(ConnectionString))
                     {
-                        using (var cmd = new SqlCommand("CommentInsertCommand", con)
+                        using (var cmd = new SqlCommand("TodoInsertCommand", con)
                         {
                             CommandType = CommandType.StoredProcedure
                         })
                         {
-                            cmd.Parameters.Add(new SqlParameter("@postID", comment.postId));
-                            cmd.Parameters.Add(new SqlParameter("@id", comment.id));
-                            cmd.Parameters.Add(new SqlParameter("@name", comment.name));
-                            cmd.Parameters.Add(new SqlParameter("@email", comment.email));
-                            cmd.Parameters.Add(new SqlParameter("@body", comment.body));
+                            cmd.Parameters.Add(new SqlParameter("@id", Todo.id));
+                            cmd.Parameters.Add(new SqlParameter("@userId", Todo.userId));
+                            cmd.Parameters.Add(new SqlParameter("@title", Todo.title));
+                            cmd.Parameters.Add(new SqlParameter("@completed", Todo.completed));
 
                             con.Open();
                             cmd.ExecuteNonQuery();
                         }
                     }
                 }
-                
                 catch (SqlException e)
-                {
-
-                }
+                { Console.WriteLine(e.Message); }
             }
-            
         }
+    
     }
 }

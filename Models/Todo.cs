@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ACMEWorker.Models
+namespace ACMEWorker.APIControllers
 {
-    class Album : IApiObject
+    class Todo
     {
         public int userId { get; set; }
         public int id { get; set; }
         public string title { get; set; }
+        public bool completed { get; set; }
     }
 }

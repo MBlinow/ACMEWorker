@@ -10,62 +10,60 @@ using System.Threading.Tasks;
 
 namespace ACMEWorker.APIControllers
 {
-    class CommentsController
+    class PhotosController
     {
         private string ConnectionString;
         static HttpClient Client;
-        private List<Comment> commentData;
-
-        public CommentsController(HttpClient client, string connectionString)
+        private List<Photo> photoData;
+        public PhotosController(HttpClient client, string connectionString)
         {
             Client = client;
             ConnectionString = connectionString;
-            commentData = new List<Comment>();
+            photoData = new List<Photo>();
         }
-        public async Task GetComments()
+        public async Task GetPhotos()
         {
-            string url = ConnectionHelper.GetConnectionString("comments", ConnectionString);
+            string url = ConnectionHelper.GetConnectionString("photos", ConnectionString);
 
             using (HttpResponseMessage response = await Client.GetAsync(url))
             {
-                commentData =
-                    await JsonSerializer.DeserializeAsync<List<Comment>>
+                photoData =
+                    await JsonSerializer.DeserializeAsync<List<Photo>>
                         (await response.Content.ReadAsStreamAsync());
             }
         }
 
-        public void SaveCommentsToDB()
+        public void SavePhotosToDB()
         {
-            
-            foreach (Comment comment in commentData)
+            foreach (Photo photo in photoData)
             {
                 try
                 {
                     using (SqlConnection con = new SqlConnection(ConnectionString))
                     {
-                        using (var cmd = new SqlCommand("CommentInsertCommand", con)
+                        using (var cmd = new SqlCommand("PhotoInsertCommand", con)
                         {
                             CommandType = CommandType.StoredProcedure
                         })
                         {
-                            cmd.Parameters.Add(new SqlParameter("@postID", comment.postId));
-                            cmd.Parameters.Add(new SqlParameter("@id", comment.id));
-                            cmd.Parameters.Add(new SqlParameter("@name", comment.name));
-                            cmd.Parameters.Add(new SqlParameter("@email", comment.email));
-                            cmd.Parameters.Add(new SqlParameter("@body", comment.body));
+                            cmd.Parameters.Add(new SqlParameter("@id", photo.id));
+                            cmd.Parameters.Add(new SqlParameter("@albumId", photo.albumId));
+                            cmd.Parameters.Add(new SqlParameter("@title", photo.title));
+                            cmd.Parameters.Add(new SqlParameter("@url", photo.url));
+                            cmd.Parameters.Add(new SqlParameter("@thumbnailUrl", photo.thumbnailUrl));
+
 
                             con.Open();
                             cmd.ExecuteNonQuery();
                         }
+
                     }
                 }
-                
                 catch (SqlException e)
-                {
-
+                { 
+                    
                 }
             }
-            
         }
     }
 }
